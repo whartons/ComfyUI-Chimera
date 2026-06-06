@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "ask": [
+      "mcp__comfyui__install_custom_node",
+      "mcp__comfyui__update_custom_node",
+      "mcp__comfyui__reinstall_custom_node",
+      "mcp__comfyui__fix_custom_node",
+      "mcp__comfyui__sync_node_dependencies",
+      "mcp__comfyui__install_workflow_dependencies",
+      "mcp__comfyui__install_comfyui",
+      "mcp__comfyui__apply_manifest",
+      "mcp__comfyui__restore_node_snapshot",
+      "mcp__comfyui__update_comfyui",
+      "mcp__comfyui__update_all",
+      "mcp__comfyui__publish_custom_node",
+      "mcp__comfyui__remove_model",
+      "mcp__comfyui__upload_output",
+      "mcp__comfyui__stop_comfyui",
+      "mcp__comfyui__start_comfyui",
+      "mcp__comfyui__restart_comfyui"
+    ]
+  }
+}
