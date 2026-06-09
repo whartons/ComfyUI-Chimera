@@ -181,6 +181,16 @@ def test_example_brand_lints_clean():
     assert [m for lvl, m in lint_brand(ROOT, "example-brand") if lvl == "fail"] == []
 
 
+def test_main_update_check_dispatches(monkeypatch, capsys):
+    import scripts.brandkit.updates as u
+    monkeypatch.setattr(generate, "ComfyClient", lambda url: object())
+    monkeypatch.setattr(u, "check_updates", lambda client, root, latest_comfyui=None: [("ok", "x")])
+    monkeypatch.setattr(u, "latest_comfyui_release", lambda: None)
+    monkeypatch.setattr(sys, "argv", ["generate.py", "update-check", "--no-network"])
+    generate.main()
+    assert "update-check:" in capsys.readouterr().out
+
+
 def test_main_doctor_dispatches_green(monkeypatch):
     import scripts.brandkit.doctor as d
     monkeypatch.setattr(generate, "ComfyClient", lambda url: object())

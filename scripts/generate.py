@@ -427,6 +427,10 @@ def main():
     dr = sub.add_parser("doctor", help="preflight: check ComfyUI, node packs, models, and a brand")
     dr.add_argument("--brand", default=None, help="also check this brand's manifest/assets/model")
     dr.add_argument("--comfy-url", default="http://127.0.0.1:8000")
+    uc = sub.add_parser("update-check",
+                        help="report available updates (chimera repo, ComfyUI, pip deps, node packs)")
+    uc.add_argument("--comfy-url", default="http://127.0.0.1:8000")
+    uc.add_argument("--no-network", action="store_true", help="skip the GitHub release lookup")
     args = ap.parse_args()
 
     repo_root = Path(__file__).resolve().parents[1]
@@ -449,6 +453,12 @@ def main():
         client = ComfyClient(args.comfy_url)
         fails = print_doctor(args.brand, run_checks(client, repo_root, args.brand))
         sys.exit(1 if fails else 0)
+    if args.modality == "update-check":
+        from scripts.brandkit.updates import check_updates, latest_comfyui_release, print_updates
+        client = ComfyClient(args.comfy_url)
+        latest = None if args.no_network else latest_comfyui_release()
+        print_updates(check_updates(client, repo_root, latest_comfyui=latest))
+        return
     if args.modality == "replay":
         data = json.loads(Path(args.sidecar).read_text(encoding="utf-8"))
         try:
