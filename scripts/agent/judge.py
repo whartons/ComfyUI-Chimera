@@ -155,3 +155,39 @@ class LocalVLMJudge(Judge):
             return Verdict(passed=False, score=0.0,
                            issues=["judge produced no verdict file"])
         return parse_verdict(text)
+
+
+class ConsensusJudge(Judge):
+    """A judge panel: aggregate N sub-judges into one Verdict by majority vote. Each sub-judge
+    scores the image independently; the panel combines them as
+      passed  = at least `pass_threshold` sub-judges passed (strict majority by default),
+      score   = mean of the sub-scores,
+      issues  = de-duplicated union of every sub-judge's issues (so the expander addresses every
+                raised concern on the next iteration).
+    Judge-agnostic — the diversity comes from the judges you pass in (different VLMs, prompts, or an
+    assistant panel), all behind the same `Judge` seam. A sub-judge that raises counts as a fail and
+    never crashes the panel, so one flaky judge can't take the loop down."""
+
+    def __init__(self, judges, *, pass_threshold=None):
+        self.judges = list(judges)
+        if not self.judges:
+            raise ValueError("ConsensusJudge needs at least one judge")
+        # strict majority: more than half must pass (N=2 -> unanimous; N=3 -> 2; N=5 -> 3)
+        self.pass_threshold = pass_threshold if pass_threshold is not None \
+            else (len(self.judges) // 2) + 1
+
+    def judge(self, image_path, rubric) -> Verdict:
+        verdicts = []
+        for j in self.judges:
+            try:
+                verdicts.append(j.judge(image_path, rubric))
+            except Exception as e:                     # one flaky judge != a dead panel
+                verdicts.append(Verdict(passed=False, score=0.0, issues=[f"judge error: {e}"]))
+        passes = sum(1 for v in verdicts if v.passed)
+        score = sum(v.score for v in verdicts) / len(verdicts)
+        seen, issues = set(), []
+        for v in verdicts:
+            for it in v.issues:
+                if it not in seen:
+                    seen.add(it); issues.append(it)
+        return Verdict(passed=passes >= self.pass_threshold, score=round(score, 4), issues=issues)
