@@ -59,6 +59,17 @@ Both drive the *same* core; they differ only in **who plays the `Judge`**.
 - **Local standalone** — unattended batches, scheduled jobs, or fully **offline** runs
   with no assistant present. Trades a touch of judging quality for autonomy.
 
+### Multi-judge consensus — `ConsensusJudge`
+
+The majority-vote consensus above is now a concrete, judge-agnostic `Judge`:
+[`scripts/agent/judge.py`](../../scripts/agent/judge.py)'s `ConsensusJudge` wraps **N sub-judges**
+and combines them — `passed` = a strict majority passed, `score` = the mean, `issues` = the
+de-duplicated union of every sub-judge's unmet criteria (so the expander addresses *all* raised
+concerns on the next iteration). A sub-judge that raises counts as a fail rather than crashing the
+panel. The diversity comes from the judges you pass in (different VLMs/prompts, or an assistant
+panel) — all behind the same `Judge` seam, so it drops straight into `run_loop`. Unit-tested in
+[`tests/test_consensus.py`](../../tests/test_consensus.py).
+
 ### Local backend
 
 > **Status: built + live-validated.** The full generate → judge → refine loop has run
