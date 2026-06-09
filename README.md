@@ -2,20 +2,25 @@
 
 ![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)
 [![tests](https://github.com/whartons/ComfyUI-Chimera/actions/workflows/ci.yml/badge.svg)](https://github.com/whartons/ComfyUI-Chimera/actions/workflows/ci.yml)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 ![ComfyUI](https://img.shields.io/badge/ComfyUI-%E2%89%A50.24-orange)
 ![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 ![Built on RTX 5090 · cu130](https://img.shields.io/badge/built%20on-RTX%205090%20%C2%B7%20cu130-76B900?logo=nvidia&logoColor=white)
 
-> A modular, **brand-aware** ComfyUI pipeline — **image · video · audio · 3D under one CLI** —
-> with a **generate → VLM-judge → refine self-correction loop**, **reproducible replay** of any
-> render, and a battle-tested **RTX 50-series tuning guide**. Built and run end-to-end on an RTX 5090.
+> An **agentic toolkit for ComfyUI**: a **self-correction loop** that judges its own renders with a
+> VLM and **iterates until they pass**, plus a hardened **MCP bridge** to drive ComfyUI from an AI
+> assistant — over a **brand-aware, multimodal** core (image · video · audio · 3D) that also runs
+> **fully standalone** from one CLI. Built and run end-to-end on an RTX 5090.
 
 ![An ember-winged chimera — lion, goat, and serpent-headed tail — over an erupting volcano, generated with this repo's Z-Image workflow on an RTX 5090](docs/images/chimera-zimage-sample.png)
 <sub>↑ A proper chimera — lion body, a goat head from the back, a serpent-headed tail, and ember-lit dragon wings — over an erupting volcano. Generated with the included [Z-Image workflow](workflows/templates/brand-zimage-txt2img.json) (`--variant base`) on an RTX 5090, straight out of ComfyUI.</sub>
 
-Chimera is a **public, reusable** set of ComfyUI workflows, docs, and orchestration glue. Fork it,
-take what's useful, ignore the rest. It's developed on an RTX 5090 but written to help anyone running
-ComfyUI — especially on **Blackwell (RTX 50-series)**.
+Chimera wraps ComfyUI in an **agent layer**: it can **drive ComfyUI from an AI assistant** (a pinned,
+audited MCP bridge) and **close the quality loop itself** — generate → VLM-judge → refine — so
+generation isn't one-shot, it *iterates to a passing result*. It also runs **fully standalone**: a
+pip-installable **`chimera`** CLI over a brand-aware, multimodal core, no assistant required. Public
+and reusable — fork it, take what's useful. Developed on an RTX 5090 but written to help anyone on
+ComfyUI, especially **Blackwell (RTX 50-series)**.
 
 ## ✅ What's here today (tested, not vapor)
 
@@ -25,84 +30,106 @@ ComfyUI — especially on **Blackwell (RTX 50-series)**.
   iteration cap. A **judge-agnostic, model-free core** (unit-tested, no GPU) with two interchangeable
   backends: a **headless local Qwen2.5-VL-7B** judge, and an **assistant multi-judge-consensus** pass.
   Live-validated end-to-end. See [`modules/agent/self-correction.md`](modules/agent/self-correction.md).
-- **One CLI, four modalities** — [`scripts/generate.py`](scripts/generate.py) drives **image, video,
-  audio, and 3D** through a shared brand-aware core (manifest → prompt → validated graph → ComfyUI →
-  per-brand output). Every graph was built from live node schemas and run end-to-end on a 5090.
-- **Reproducible by construction** — every render writes a schema-versioned **sidecar** JSON, and
-  `generate.py replay <sidecar>.json` re-runs the *identical* render (prompt, seed, model, inputs).
-- **Quality + onboarding polish** — image/video `--upscale` (4× ESRGAN / 2× LTX latent), a
-  `new-brand` scaffolder, and a `lint` validator that catches brand-config mistakes early.
-- **[RTX 50-series / Blackwell tuning guide](docs/BLACKWELL-TUNING.md)** — the part most people get
+- **🔌 Drive ComfyUI from an AI assistant** — a **pinned, security-audited** [MCP bridge](modules/agent/)
+  exposes pipeline actions so an assistant (e.g. Claude) can run ComfyUI for you, with **per-tool
+  approval gates** on the dangerous tools. The self-correction loop + the bridge are the two halves of
+  the "agentic" story.
+- **🎛️ …or run it standalone — one CLI, four modalities** — no assistant needed: `pip install -e .`
+  and the **`chimera`** command drives **image, video, audio, and 3D** through a shared brand-aware core
+  (manifest → prompt → validated graph → ComfyUI → per-brand output). Every graph was built from live
+  node schemas and run end-to-end on a 5090.
+- **🩺 Preflight + onboarding** — **`chimera doctor`** checks ComfyUI reachability, installed node
+  packs, and your models *before* a multi-minute render; **`new-brand`** scaffolds a brand and **`lint`**
+  validates `brand.yaml` + its assets so config mistakes surface early.
+- **🔁 Reproducible by construction** — every render writes a schema-versioned **sidecar** JSON with a
+  **provenance** block (resolved model + seed + the *actual* graph prompts, plus the ComfyUI version,
+  pipeline git commit, and a structural graph signature). `chimera replay <sidecar>.json` re-runs the
+  *identical* render.
+- **[⚡ RTX 50-series / Blackwell tuning guide](docs/BLACKWELL-TUNING.md)** — the part most people get
   wrong. cu130 to unlock comfy-kitchen's FP4 kernels, SageAttention, `--fast`, NVFP4 — with **measured
   numbers** (FLUX.2: **8.4 s vs 22.7 s, a 2.7× speedup at equal quality** on a 5090) and the
   non-obvious **`Comfy.Server.LaunchArgs`** trick for passing flags to ComfyUI **Desktop**.
-- **[Brand Kits](brands/)** — keep each brand's reference art + a YAML "brand brain" in one folder and
+- **[🎨 Brand Kits](brands/)** — keep each brand's reference art + a YAML "brand brain" in one folder and
   generate **on-brand** assets (prompt injection + alpha-exact logo overlay + product re-render +
   optional LoRA), routed to per-brand output folders. The *pattern* is public; your brand data stays
   gitignored. See [`modules/image/brand-kits.md`](modules/image/brand-kits.md).
-- **A hardened [MCP bridge](modules/agent/)** — drive ComfyUI from an AI assistant through a
-  **pinned, security-audited** third-party MCP server, with per-tool approval gates.
 
-**183 GPU-free unit tests** (mocked ComfyUI client) keep the core green without a GPU.
+**270 GPU-free unit tests** (mocked ComfyUI client) keep the core green without a GPU — run on every
+push via cross-platform CI (Linux + Windows).
 
 ## 🧩 Modules
-| Module | Backend | Status |
-|--------|---------|--------|
+| Module | What it does | Status |
+|--------|--------------|--------|
+| [`agent`](modules/agent/self-correction.md) | **Self-correction loop** (generate → VLM judge → refine) | ✅ |
+| [`agent`](modules/agent/) | **MCP bridge** + security model — drive ComfyUI from an assistant | ✅ |
 | [`image`](modules/image/) | Z-Image (default) · FLUX.2 (secondary) — txt2img / logo / product · `--upscale` | ✅ |
 | [`video`](modules/video/) | LTX-2.3 image-to-video + native synced audio · `--upscale` | ✅ |
 | [`audio`](modules/audio/) | ACE-Step (music) · HunyuanVideo-Foley (video → SFX) | ✅ |
 | [`threed`](modules/threed/) | Hunyuan3D 2.1 image → mesh (GLB / STL / OBJ) | ✅ |
-| [`agent`](modules/agent/self-correction.md) | **Self-correction loop** (generate → VLM judge → refine) | ✅ |
-| [`agent`](modules/agent/) | MCP bridge + security model | ✅ |
 
 ## 🏗️ Architecture / engineering highlights
 
 The parts an engineer (or hiring manager) might want to see:
 
-- **One brand-aware core, per-modality fillers.** `manifest → prompt → validated graph → ComfyUI →
-  routed output` is shared; each modality plugs in a small "filler" that builds its API-format graph.
-  Nodes are addressed by a **stable `_meta.title`, not numeric id**, so re-saving a graph in ComfyUI
-  can't break the fillers.
 - **The agent loop is a clean abstraction.** `run_loop` depends only on a `Judge` interface, a
   `PromptExpander` interface, and an injected `generate` callable — so the whole generate→judge→refine
   loop is **fully unit-testable with no ComfyUI, no GPU, no model**, and the local-VLM and
   assistant-consensus backends slot in behind the same seam.
-- **Reproducibility is a first-class feature.** Schema-versioned sidecars capture the *resolved* inputs
-  + the *actual* graph prompt/negative; `replay` reconstructs the run; an `agent-run` sidecar is
-  explicitly marked so it can't be mistaken for a replayable render.
+- **One brand-aware core, per-modality fillers.** `manifest → prompt → validated graph → ComfyUI →
+  routed output` is shared; each modality plugs in a small "filler" that builds its API-format graph.
+  Nodes are addressed by a **stable `_meta.title`, not numeric id**, so re-saving a graph in ComfyUI
+  can't break the fillers. Each filler **owns its model/upscaler resolution**, so the sidecar can never
+  drift from the graph that actually ran.
+- **Reproducibility is a first-class feature.** Schema-versioned sidecars capture the *resolved* inputs,
+  the *actual* graph prompt/negative, and a provenance block (ComfyUI version, pipeline git commit,
+  structural graph signature); `replay` reconstructs the run; an `agent-run` sidecar is explicitly
+  marked so it can't be mistaken for a replayable render.
 - **Third-party code is treated as untrusted.** The MCP server and every custom node pack are
   **read, adversarially audited, and pinned to an exact version or commit** before adoption, with
   per-tool approval gates on the dangerous tools — never `@latest`.
-- **Tested without a GPU.** 183 tests run against a mocked ComfyUI client, so correctness of the
-  graph-building, routing, sidecar, replay, scaffolder, and agent-loop logic is verifiable in CI-time.
+- **Tested without a GPU, on every push.** 270 tests run against a mocked ComfyUI client (graph-building,
+  routing, sidecar, replay, scaffolder, doctor, and agent-loop logic), linted with **ruff** and packaged
+  as an installable CLI — all verified by **CI on Linux + Windows**.
 
-## ⚡ Generate — one CLI, four modalities
+## ⚡ Use it — install once, then `chimera`
+
+```bash
+pip install -e .            # editable install; gives you the `chimera` command (+ python scripts/generate.py still works)
+chimera doctor --brand <brand>   # preflight: ComfyUI reachable? node packs + models installed?
+```
 
 ```bash
 # image  (Z-Image default; --variant base|turbo; --model flux2… switches to FLUX.2; opt-in --watermark)
-python scripts/generate.py image --brand <brand> --mode txt2img --subject "an armored rover" --watermark
-python scripts/generate.py image --brand <brand> --mode product --asset rover.png    # img2img restyle
-python scripts/generate.py image --brand <brand> --mode txt2img --subject "…" --upscale   # 4× ESRGAN
+chimera image --brand <brand> --mode txt2img --subject "an armored rover" --watermark
+chimera image --brand <brand> --mode product --asset rover.png        # img2img restyle
+chimera image --brand <brand> --mode txt2img --subject "…" --upscale  # 4× ESRGAN
 # video  (image-to-video with synced audio; --upscale = 2× LTX spatial latent upscaler)
-python scripts/generate.py video --brand <brand> --from-image rover.png --subject "rolls forward, dust"
+chimera video --brand <brand> --from-image rover.png --subject "rolls forward, dust"
 # audio  (music = text→stinger; foley = video→SFX muxed back onto the clip)
-python scripts/generate.py audio --brand <brand> --mode music --subject "logo sting"
-python scripts/generate.py audio --brand <brand> --mode foley --from-video clip.mp4 --subject "tires on gravel"
+chimera audio --brand <brand> --mode music --subject "logo sting"
+chimera audio --brand <brand> --mode foley --from-video clip.mp4 --subject "tires on gravel"
 # 3D  (image→mesh; export glb | stl | obj)
-python scripts/generate.py 3d --brand <brand> --from-image rover.png --format stl
+chimera 3d --brand <brand> --from-image rover.png --format stl
 ```
 
 Outputs route to `brands/<brand>/outputs/{images,video,audio,3d}/` (organized by media type), each with
 a reproducibility sidecar — **moved** into the brand folder, never duplicated to the global `outputs/`.
 The opt-in `--watermark` composites the brand logo in-graph (off by default).
 
+### 🤖 Or let it correct itself
+```bash
+python scripts/agent/auto_generate.py --brand <brand> --subject "an armored rover" \
+    --comfy-output-dir <comfy_output_dir>   # generate → local VLM judge → refine, until it passes
+```
+
 ## 🔁 Reproducibility & replay
 
 Every output ships a `<output>.json` sidecar recording the resolved seed, model, prompt/negative, and
-inputs. Re-run any render exactly:
+inputs — plus a `provenance` block (ComfyUI version, pipeline git commit, and a structural graph
+signature) so an asset traces back to exactly what produced it. Re-run any render exactly:
 
 ```bash
-python scripts/generate.py replay brands/<brand>/outputs/images/<name>.json   # [--seed N] to vary
+chimera replay brands/<brand>/outputs/images/<name>.json   # [--seed N] to vary
 ```
 
 It reconstructs the CLI inputs from the sidecar and re-derives the prompt through the same brand-aware
@@ -111,8 +138,9 @@ path — so with an unchanged `brand.yaml` you get the identical render.
 ## 🆕 Spin up a new brand
 
 ```bash
-python scripts/generate.py new-brand <name>      # scaffold from brands/_template/ (your brand stays gitignored)
-python scripts/generate.py lint --brand <name>   # validate brand.yaml + referenced assets before you render
+chimera new-brand <name>      # scaffold from brands/_template/ (your brand stays gitignored)
+chimera lint --brand <name>   # validate brand.yaml + referenced assets before you render
+chimera doctor --brand <name> # then preflight the runtime (ComfyUI, node packs, models)
 ```
 
 ### 🖼️ Example showcase — the `example-brand`
@@ -142,12 +170,17 @@ See **[`docs/CATALOG.md`](docs/CATALOG.md)** for the best free, locally-runnable
 1. Install **ComfyUI ≥ 0.24** ([`docs/SETUP.md`](docs/SETUP.md) — RTX 50-series wants the
    CUDA 12.8+/cu130 build; the local agent judge uses a core node added in 0.24).
 2. **5090 owner?** Run the [tuning guide](docs/BLACKWELL-TUNING.md) — it pays for itself.
-3. Download a module's models (e.g. [`modules/image/models.md`](modules/image/models.md)).
+3. Install Chimera + download a module's models (e.g. [`modules/image/models.md`](modules/image/models.md)):
+   ```bash
+   git clone https://github.com/whartons/ComfyUI-Chimera && cd ComfyUI-Chimera
+   pip install -e ".[dev]"          # the `chimera` CLI + test/lint tooling
+   chimera doctor --brand example-brand   # confirm ComfyUI + models are ready
+   ```
 4. Try it on the demo brand, or scaffold your own:
    ```bash
-   python scripts/generate.py image --brand example-brand --mode txt2img \
+   chimera image --brand example-brand --mode txt2img \
        --subject "an armored rover" --comfy-output-dir outputs
-   python scripts/generate.py new-brand my-brand   # then edit brands/my-brand/brand.yaml + lint it
+   chimera new-brand my-brand       # then edit brands/my-brand/brand.yaml + lint it
    ```
 
 ## Privacy model
@@ -169,7 +202,8 @@ them as **untrusted-by-default** and keeps them on a short leash:
   generation tools stay frictionless.
 
 **Reusable takeaway:** if you adopt *any* community MCP server or node pack, pin it, audit it, gate the
-dangerous tools, and re-scan on a cadence instead of tracking `@latest`.
+dangerous tools, and re-scan on a cadence instead of tracking `@latest`. Reporting a vuln? See
+[`SECURITY.md`](SECURITY.md). Contributing? See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Hardware
 Developed on an RTX 5090 (32 GB), **cu130 / torch 2.10** reference build. Most things run on far less
