@@ -26,9 +26,10 @@ outputs/
 *.stl
 *.ply
 *.3mf
-# (allow committed example thumbnails if you ever need them)
+# (allow committed example thumbnails + the README demo GIF)
 !docs/**/*.png
 !docs/**/*.jpg
+!docs/**/*.gif
 
 # Model weights & caches  ── never commit; reference by URL in models.md
 models/

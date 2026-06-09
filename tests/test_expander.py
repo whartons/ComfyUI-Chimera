@@ -73,6 +73,21 @@ def test_parse_fixes_none_when_absent():
     assert parse_fixes(["no directive here", "palette absent"]) == ([], [])
 
 
+def test_correction_brandless_has_no_empty_brand_lead():
+    # brandless (no style/palette): the correction must NOT emit a malformed
+    # "render strictly in the  style, using only the brand palette ()" — it degrades to a bare
+    # "Correct the previous attempt." + the add-emphasis. This is the unbranded judge+correction path.
+    e = TemplatedExpander()
+    issues = ["1. NOT-MET. FIX: add a serpent-headed tail; avoid plain lion tail"]
+    pos, neg = e.expand("a chimera with a serpent tail", BrandManifest(name="Bare"),
+                        prior_issues=issues)
+    assert pos.lower().startswith("correct the previous attempt")
+    assert "strictly in the" not in pos.lower()      # no brand-style anchor
+    assert "brand palette" not in pos.lower()         # no palette anchor
+    assert "serpent-headed tail" in pos               # the add term is still emphasized
+    assert "plain lion tail" in neg                   # avoid term still augments the negative
+
+
 def test_strip_terms_removes_avoid_and_tidies():
     from scripts.agent.expander import _strip_terms
     out = _strip_terms("a glossy plastic toy rover, candy colors, six wheels",

@@ -48,7 +48,7 @@ def test_new_brand_cleans_up_on_seed_failure(tmp_path):
     # Build a template whose brand.yaml is a directory so read_text() raises during seeding.
     tpl = tmp_path / "brands" / "_template"
     (tpl / "brand.yaml").mkdir(parents=True)  # a dir, not a file -> read_text() fails
-    with pytest.raises(Exception):
+    with pytest.raises(OSError):  # IsADirectoryError (POSIX) / PermissionError (Windows)
         new_brand(tmp_path, "halfbaked")
     # the partially-copied dest must be removed
     assert not (tmp_path / "brands" / "halfbaked").exists()

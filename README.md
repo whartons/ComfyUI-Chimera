@@ -23,6 +23,11 @@ pip-installable **`chimera`** CLI over a brand-aware, multimodal core, no assist
 and reusable — fork it, take what's useful. Developed on an RTX 5090 but written to help anyone on
 ComfyUI, especially **Blackwell (RTX 50-series)**.
 
+**The headline, in motion — the loop correcting itself:**
+
+![The self-correction loop: the same six-wheeled rover at the same seed — the consensus judge fails an off-brand glossy toy finish at 0.38, then the loop corrects it to on-brand gunmetal tactical armor at 0.92](docs/images/agent-correct.gif)
+<sub>↑ **One subject, one seed.** The VLM judge **fails** an off-brand render (glossy toy finish, 0.38), the loop folds its `FIX: add…; avoid…` directives back into the prompt, and the re-render **passes** (on-brand tactical armor, 0.92) — generate → judge → refine, no human in the loop. The subject never changes; what gets corrected is the *brand*. It runs **brandless** too — the same loop against a *subject + quality* rubric (e.g. correcting a chimera that's missing its serpent-headed tail). See [`modules/agent/self-correction.md`](modules/agent/self-correction.md).</sub>
+
 ## ✅ What's here today (tested, not vapor)
 
 - **🤖 An agent self-correction loop** *(the headline)* — Chimera doesn't just generate once, it
@@ -59,8 +64,29 @@ ComfyUI, especially **Blackwell (RTX 50-series)**.
   folder. Entirely opt-in — the tool generates fine without it. The *pattern* is public; your brand
   data stays gitignored. See [`modules/image/brand-kits.md`](modules/image/brand-kits.md).
 
-**314 GPU-free unit tests** (mocked ComfyUI client) keep the core green without a GPU — run on every
+**315 GPU-free unit tests** (mocked ComfyUI client) keep the core green without a GPU — run on every
 push via cross-platform CI (Linux + Windows).
+
+## 🔭 How it works
+
+One render is a straight pipeline; the **self-correction loop** wraps a feedback edge around it
+(dotted below) — the judge either accepts the candidate or folds its `FIX` directives back into the
+prompt and regenerates.
+
+```mermaid
+flowchart LR
+    M["brand.yaml<br/>(optional)"] --> P["build_prompt<br/>style · palette · negative"]
+    P --> G["validated ComfyUI graph<br/>(title-addressed nodes)"]
+    G -->|"POST /prompt"| C["ComfyUI<br/>Z-Image · LTX-2.3 · ACE-Step · Hunyuan3D"]
+    C --> R["route_output<br/>outputs/ or brands/[brand]/"]
+    R --> S["sidecar<br/>seed · model · prompts · provenance"]
+    C -. "candidate" .-> J["VLM judge<br/>rubric → MET / NOT-MET · score"]
+    J -. "PASS" .-> S
+    J -. "FAIL · FIX: add…; avoid…" .-> P
+```
+
+The full dependency/stack inventory (Python · ComfyUI · pinned node packs · MCP · models · CI · host)
+is in **[`docs/STACK.md`](docs/STACK.md)**.
 
 ## 🧩 Modules
 | Module | What it does | Status |
@@ -92,7 +118,7 @@ The parts an engineer (or hiring manager) might want to see:
 - **Third-party code is treated as untrusted.** The MCP server and every custom node pack are
   **read, adversarially audited, and pinned to an exact version or commit** before adoption, with
   per-tool approval gates on the dangerous tools — never `@latest`.
-- **Tested without a GPU, on every push.** 314 tests run against a mocked ComfyUI client (graph-building,
+- **Tested without a GPU, on every push.** 315 tests run against a mocked ComfyUI client (graph-building,
   routing, sidecar, replay, scaffolder, doctor, and agent-loop logic), linted with **ruff** and packaged
   as an installable CLI — all verified by **CI on Linux + Windows**.
 

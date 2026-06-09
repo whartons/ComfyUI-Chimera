@@ -98,9 +98,10 @@ through the FLUX.2 templates instead.
 
 **Recommended default (mid-2026): LTX-2.3 22B**
 
-Node pack: `https://github.com/Lightricks/ComfyUI-LTXVideo`
-(provides MultimodalGuider, normalizing sampler, 2-stage spatial upscaler nodes,
-and IC-LoRA support — install via ComfyUI-Manager before using the models below).
+Node pack: `https://github.com/Lightricks/ComfyUI-LTXVideo` — **pinned at audited
+commit `229437c`** (re-scan before advancing the pin). Provides MultimodalGuider,
+normalizing sampler, 2-stage spatial upscaler nodes, and IC-LoRA support — install
+via ComfyUI-Manager, then `git checkout 229437c`, before using the models below.
 
 | File | HuggingFace repo | Destination (`ComfyUI/models/…`) | Size | License |
 |------|-----------------|----------------------------------|------|---------|

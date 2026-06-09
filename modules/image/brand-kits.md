@@ -47,14 +47,21 @@ toggle and lands in a separate V2 plan — adding it doesn't disturb V1.
 
 ## Modes → templates
 
-`--mode` selects one of three generic, API-format FLUX.2 graphs in
-`workflows/templates/` (the filler addresses nodes by a stable `_meta.title` (see `brandkit/nodes.py`), so re-saving a graph in ComfyUI can't silently misroute an edit):
+`--mode` selects one of three generic, API-format graphs in `workflows/templates/`. The
+**default backend is Z-Image** — the filler dispatches to the `brand-zimage-*` templates when the
+model name starts with `z_image`; passing a `flux2*` model name routes to the parallel FLUX.2 graphs
+instead. The filler addresses nodes by a stable `_meta.title` (see `brandkit/nodes.py`), so re-saving
+a graph in ComfyUI can't silently misroute an edit.
 
-| Mode | Template | What it does |
+| Mode | Template (default · Z-Image) | What it does |
 |---|---|---|
-| `txt2img` | `brand-txt2img.json` | on-brand text-to-image (the verified FLUX.2 graph) |
-| `logo` | `brand-logo-overlay.json` | txt2img → composite `logos/<png>` (alpha-correct) at a corner |
-| `product` | `brand-product-mockup.json` | img2img: re-render `products/<png>` into a new scene |
+| `txt2img` | `brand-zimage-txt2img.json` | on-brand text-to-image (the verified Z-Image graph) |
+| `logo` | `brand-zimage-logo-overlay.json` | txt2img → composite `logos/<png>` (alpha-correct) at a corner |
+| `product` | `brand-zimage-product.json` | img2img: re-render `products/<png>` into a new scene |
+
+The **FLUX.2 fallback** uses the parallel `brand-txt2img.json` / `brand-logo-overlay.json` /
+`brand-product-mockup.json` graphs, selected by setting a `flux2*` model in `brand.yaml` or via
+`--model` (see [`../../docs/CATALOG.md`](../../docs/CATALOG.md)).
 
 The logo overlay uses `LoadImage`'s mask output as the composite alpha and computes
 x/y from `logo.position` + `logo.margin` against the canvas, so the logo stays

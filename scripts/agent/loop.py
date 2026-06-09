@@ -6,7 +6,6 @@ with no ComfyUI / model / network dependency. Seeds are deterministic.
 from __future__ import annotations
 import sys
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .judge import Verdict
 from .rubric import build_rubric
@@ -25,7 +24,7 @@ class IterRecord:
 class LoopResult:
     """The outcome: the best candidate seen and the full per-iteration history."""
     best_image: object
-    best_verdict: Optional[Verdict]
+    best_verdict: Verdict | None
     passed: bool
     history: list = field(default_factory=list)
 
