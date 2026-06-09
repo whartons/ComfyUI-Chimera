@@ -1,5 +1,4 @@
 from __future__ import annotations
-import pytest
 from scripts.brandkit.sidecar import (
     SCHEMA_VERSION, graph_prompts, relevant_inputs, build_meta, graph_signature,
 )

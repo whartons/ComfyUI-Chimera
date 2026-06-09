@@ -15,9 +15,14 @@ ComfyUI client, so you can develop and validate most changes on any machine.
 ```bash
 git clone https://github.com/whartons/ComfyUI-Chimera
 cd ComfyUI-Chimera
-pip install -r requirements-dev.txt      # pytest + pyyaml
-python -m pytest -q                       # the whole offline core
+pip install -e ".[dev]"     # editable install + pytest & ruff; gives you the `chimera` command
+python -m pytest            # the whole offline core
+ruff check .                # lint (correctness rules)
 ```
+
+(`pip install -r requirements-dev.txt` is a lighter alternative that installs the tools without
+the package.) Once installed editable, the CLI is available as `chimera image --brand … ` as well
+as `python scripts/generate.py image --brand …`.
 
 End-to-end generation additionally needs a running ComfyUI at `127.0.0.1:8000` with the relevant
 models — see [`docs/SETUP.md`](docs/SETUP.md) and each module's `models.md`.

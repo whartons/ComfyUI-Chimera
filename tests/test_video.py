@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from scripts.brandkit.manifest import load_manifest
 from scripts.brandkit.video import build

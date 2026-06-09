@@ -129,7 +129,7 @@ def test_probe_video_without_pyav_returns_none_tuple(monkeypatch):
 def test_resolve_model_used_per_modality():
     rm = generate._resolve_model_used
     assert rm(_args_ns(modality="video", mode="i2v"), M) == video_filler.resolved_model(M)
-    from scripts.brandkit import audio as af, threed as tf
+    from scripts.brandkit import audio as af
     assert rm(_args_ns(modality="audio", mode="foley"), M) == af.resolved_model(M, "foley")
     assert rm(_args_ns(modality="audio", mode="music"), M) == af.resolved_model(M, "music")
     assert rm(_args_ns(modality="3d", mode="image", model="x3d.safetensors"), M) == "x3d.safetensors"
