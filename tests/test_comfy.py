@@ -109,6 +109,23 @@ def test_wait_raises_on_error(monkeypatch):
     with pytest.raises(RuntimeError):
         c.wait("abc")
 
+def test_comfyui_version_from_system_stats(monkeypatch):
+    payload = {"system": {"comfyui_version": "v0.24.1", "python_version": "3.12.11"}}
+    monkeypatch.setattr(comfy.urllib.request, "urlopen",
+                        lambda req, timeout=0: FakeResp(json.dumps(payload).encode()))
+    assert comfy.ComfyClient().comfyui_version() == "v0.24.1"
+
+def test_comfyui_version_missing_field_returns_none(monkeypatch):
+    monkeypatch.setattr(comfy.urllib.request, "urlopen",
+                        lambda req, timeout=0: FakeResp(json.dumps({"system": {}}).encode()))
+    assert comfy.ComfyClient().comfyui_version() is None
+
+def test_comfyui_version_unreachable_returns_none(monkeypatch):
+    def boom(req, timeout=0):
+        raise OSError("connection refused")
+    monkeypatch.setattr(comfy.urllib.request, "urlopen", boom)
+    assert comfy.ComfyClient().comfyui_version() is None  # provenance is optional, must not raise
+
 def test_free_posts_unload_and_free_flags(monkeypatch):
     captured = {}
     def fake_urlopen(req, timeout=0):

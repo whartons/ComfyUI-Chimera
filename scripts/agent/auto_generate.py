@@ -24,6 +24,7 @@ from scripts.brandkit import workflow as image_filler
 from scripts.brandkit.comfy import ComfyClient
 from scripts.brandkit.manifest import load_manifest
 from scripts.brandkit.outputs import select_output, route_output, write_sidecar
+from scripts.generate import git_provenance
 
 
 def _parse_seeds(raw):
@@ -66,6 +67,7 @@ def _write_run_sidecar(result, args, repo_root):
         "final_score": result.best_verdict.score if result.best_verdict else 0.0,
         "winning_seed": last.seed, "winning_prompt": last.prompt,
         "comfy_url": args.comfy_url,
+        "provenance": {"pipeline_git_sha": git_provenance(repo_root)},
         "timestamp": datetime.datetime.now().isoformat(timespec="seconds"),
     }
     write_sidecar(result.best_image, meta)

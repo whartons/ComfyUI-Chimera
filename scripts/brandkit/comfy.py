@@ -67,6 +67,17 @@ class ComfyClient:
         with urllib.request.urlopen(req, timeout=self.timeout):
             pass
 
+    def comfyui_version(self):
+        """Best-effort ComfyUI version string from /system_stats, for the reproducibility sidecar.
+        None if the server doesn't report it or is unreachable — never raises (provenance is
+        optional and must not fail a completed render)."""
+        try:
+            data = self._get("/system_stats")
+            info = data.get("system", {}) if isinstance(data, dict) else {}
+            return info.get("comfyui_version") or None
+        except Exception:
+            return None
+
     def wait(self, prompt_id: str, poll=3, max_wait=900) -> dict:
         end = time.time() + max_wait
         while time.time() < end:

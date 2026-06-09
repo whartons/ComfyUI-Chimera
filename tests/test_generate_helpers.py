@@ -248,6 +248,40 @@ def test_prepare_3d_missing_image_errors(tmp_path):
         generate._prepare_3d(args, M, brand_dir, _FakeUploadClient(), _StubAp())
 
 
+# ------------------------------------------------------------- git_provenance (reproducibility)
+def _fake_run_factory(rev_out, status_out, returncode=0):
+    def fake_run(cmd, **k):
+        out = rev_out if "rev-parse" in cmd else status_out
+        return types.SimpleNamespace(returncode=returncode, stdout=out, stderr="")
+    return fake_run
+
+
+def test_git_provenance_clean(monkeypatch):
+    import subprocess
+    monkeypatch.setattr(subprocess, "run", _fake_run_factory("abc1234\n", ""))  # porcelain empty
+    assert generate.git_provenance("anyroot") == "abc1234"
+
+
+def test_git_provenance_dirty(monkeypatch):
+    import subprocess
+    monkeypatch.setattr(subprocess, "run", _fake_run_factory("abc1234\n", " M scripts/x.py\n"))
+    assert generate.git_provenance("anyroot") == "abc1234-dirty"
+
+
+def test_git_provenance_not_a_repo(monkeypatch):
+    import subprocess
+    monkeypatch.setattr(subprocess, "run", _fake_run_factory("", "", returncode=128))
+    assert generate.git_provenance("anyroot") is None
+
+
+def test_git_provenance_git_absent(monkeypatch):
+    import subprocess
+    def boom(cmd, **k):
+        raise FileNotFoundError("git not on PATH")
+    monkeypatch.setattr(subprocess, "run", boom)
+    assert generate.git_provenance("anyroot") is None
+
+
 # ------------------------------------------------------------------ auto_generate.py helpers (B5)
 def test_write_run_sidecar_none_image_short_circuits(monkeypatch):
     from scripts.agent import auto_generate as ag
@@ -261,6 +295,7 @@ def test_write_run_sidecar_builds_agent_run_meta(monkeypatch, tmp_path):
     from scripts.agent import auto_generate as ag
     captured = {}
     monkeypatch.setattr(ag, "write_sidecar", lambda path, meta: captured.update(path=path, meta=meta))
+    monkeypatch.setattr(ag, "git_provenance", lambda root: "abc1234")  # hermetic: no real subprocess
     rec = types.SimpleNamespace(iter=0, seed=7, prompt="P",
                                 verdict=types.SimpleNamespace(score=0.9, passed=True))
     result = types.SimpleNamespace(best_image="img.png", history=[rec], passed=True,
@@ -271,6 +306,7 @@ def test_write_run_sidecar_builds_agent_run_meta(monkeypatch, tmp_path):
     assert meta["kind"] == "agent-run" and meta["schema"] == 2      # the replay-refusal discriminator
     assert meta["brand"] == "b" and meta["winning_seed"] == 7
     assert meta["final_score"] == 0.97 and meta["passed"] is True and meta["iterations"] == 1
+    assert meta["provenance"]["pipeline_git_sha"] == "abc1234"      # provenance recorded
 
 
 def test_make_generate_queues_waits_and_routes(monkeypatch, tmp_path):

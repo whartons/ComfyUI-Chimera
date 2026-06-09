@@ -182,6 +182,25 @@ def _supports_watermark(modality, mode):
     return False
 
 
+def git_provenance(repo_root):
+    """Best-effort short provenance of the pipeline repo at render time: the HEAD commit (short),
+    suffixed `-dirty` if the working tree has uncommitted changes. None when it isn't a git repo or
+    git is absent — so a tarball/non-git install still renders. Recorded in the sidecar so a render
+    traces back to the exact pipeline code that produced it. Best-effort: never raises."""
+    import subprocess
+    try:
+        rev = subprocess.run(["git", "-C", str(repo_root), "rev-parse", "--short", "HEAD"],
+                             capture_output=True, text=True, timeout=5)
+        if rev.returncode != 0:
+            return None
+        sha = rev.stdout.strip()
+        st = subprocess.run(["git", "-C", str(repo_root), "status", "--porcelain"],
+                            capture_output=True, text=True, timeout=5)
+        return sha + ("-dirty" if st.stdout.strip() else "")
+    except Exception:
+        return None
+
+
 def _resolve_model_used(args, m):
     """The model filename the graph ACTUALLY loaded — asked of the filler that decided it, so the
     sidecar can never drift from the built graph (single source of truth, B6). Pure."""
@@ -329,7 +348,8 @@ def run(args, repo_root, ap):
                           model=model_used, watermark=do_watermark, comfy_url=args.comfy_url,
                           wf=wf, inputs=inputs,
                           timestamp=datetime.datetime.now().isoformat(timespec="seconds"),
-                          fmt=fmt)
+                          fmt=fmt, comfyui_version=client.comfyui_version(),
+                          pipeline_git_sha=git_provenance(repo_root))
         write_sidecar(dest, meta)
         print(f"output -> {dest}")
     else:
