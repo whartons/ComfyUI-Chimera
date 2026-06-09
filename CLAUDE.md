@@ -43,9 +43,11 @@ so anyone can fork and reuse it.
 chimera/
 ├── CLAUDE.md            # this file (AI-contributor brief)
 ├── README.md            # human-facing overview + quickstart
-├── .gitignore  .env.example  LICENSE
+├── CHANGELOG.md         # Keep a Changelog — record every notable change under [Unreleased]
+├── .gitignore  .env.example  LICENSE  codecov.yml  .pre-commit-config.yaml
 ├── docs/
 │   ├── CATALOG.md       # best models/templates per modality (+ licenses)
+│   ├── STACK.md         # dependency/stack inventory (Python · ComfyUI · node-pack pins · MCP · CI · host)
 │   ├── SETUP.md         # install notes
 │   └── BLACKWELL-TUNING.md  # RTX 50-series / cu130 tuning guide (measured numbers)
 ├── modules/             # one folder per modality (tracked, generic): image, video, audio, threed, agent
@@ -95,6 +97,21 @@ Baseline documented in `docs/SETUP.md` + `docs/BLACKWELL-TUNING.md`: RTX 5090 (3
 CUDA 12.8+ is the minimum to drive Blackwell at all; the **reference build is cu130 / torch
 2.10**, which unlocks comfy-kitchen's FP4 path (the headline ~2.7× win). Do **not** assume
 others have a 5090 — always note per-module VRAM needs and quantized (GGUF / NVFP4 / fp8) options.
+
+## Keep the docs in sync (every change)
+These docs are **living** — update them in the SAME change that alters behavior, never "later". A
+stale doc is a bug.
+- **Feature / CLI flag / behavior change** → `README.md` + the relevant `modules/<name>/` doc + a
+  `CHANGELOG.md` `[Unreleased]` entry. If it touches the agent loop or judge, also
+  `modules/agent/self-correction.md`.
+- **Dependency, model, or node-pack pin** → `docs/STACK.md` **and** `docs/CATALOG.md` (plus the pin +
+  `git checkout <sha>` in that module's `models.md`). Pin third-party packs by commit, never `@latest`.
+- **Test-count change** → the count claims in `README.md` and `docs/STACK.md` (the CI count uses
+  `[dev]` only; the `[images]`/pillow-gated tests skip there, so CI ≈ local − 2).
+- **Cutting a release** → move `CHANGELOG.md` `[Unreleased]` into the new version, bump
+  `pyproject.toml` `version`, then tag + create the GitHub release.
+
+When in doubt, run a quick staleness pass over the tracked docs before opening a PR.
 
 ## Guardrails
 - Never commit secrets; use `.env` (gitignored) and keep `.env.example` current.

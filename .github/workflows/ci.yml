@@ -38,5 +38,11 @@ jobs:
         with:
           files: ./coverage.xml
         continue-on-error: true   # don't fail CI before the Codecov app is authorized
+      - name: Audit dependencies for known advisories (pip-audit)
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true   # advisory: surface CVEs in the dep tree without gating the merge
+        run: |
+          python -m pip install pip-audit
+          pip-audit --desc
       - name: CLI entry point smoke
         run: chimera --help

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera"
-version = "0.1.0"
+version = "0.1.2"
 description = "Brand-aware, multimodal ComfyUI pipeline (image / video / audio / 3D) with an agent self-correction loop and reproducible replay."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -43,10 +43,10 @@ line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
-# Intentionally scoped to correctness (pyflakes): unused/undefined names, redefinitions, f-string
-# bugs. Stylistic rules (E/I) are NOT enforced — the codebase deliberately uses compact one-line
-# statements (`a; b`), grouped imports, and a `sys.path` shim before imports. Expand if desired.
-select = ["F"]
+# Correctness + likely-bug + modern-syntax: pyflakes (F), flake8-bugbear (B), pyupgrade (UP).
+# The stylistic rules (E/I) stay OFF by design — the codebase deliberately uses compact one-line
+# statements (`a; b`), grouped imports, and a `sys.path` shim before imports, which E/I would fight.
+select = ["F", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

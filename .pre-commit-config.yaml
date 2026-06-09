@@ -1,0 +1,19 @@
+# Optional local dev hooks — CI remains the source of truth; these just catch issues before a push.
+#   pip install pre-commit && pre-commit install      # enable on commit
+#   pre-commit run --all-files                         # run on demand
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.16
+    hooks:
+      - id: ruff                       # lint with the project's F,B,UP rules (configured in pyproject.toml)
+        args: [--fix]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=15000]          # backstop against committing model weights (GB-scale); showcase media stays well under this

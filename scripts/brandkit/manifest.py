@@ -2,7 +2,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 import sys
 import yaml
 
@@ -18,12 +17,12 @@ class Defaults:
     height: int = 1024
     steps: int = 20
     guidance: float = 3.5
-    upscale_model: Optional[str] = None   # image --upscale model; filler falls back to DEFAULT_UPSCALE_MODEL
+    upscale_model: str | None = None   # image --upscale model; filler falls back to DEFAULT_UPSCALE_MODEL
 
 
 @dataclass
 class Logo:
-    default: Optional[str] = None
+    default: str | None = None
     position: str = "bottom-right"
     scale: float = 0.18
     margin: float = 0.04
@@ -31,7 +30,7 @@ class Logo:
 
 @dataclass
 class Lora:
-    file: Optional[str] = None
+    file: str | None = None
     strength: float = 0.8
 
 
@@ -53,24 +52,24 @@ class Watermark:
 
 @dataclass
 class Video:
-    model: Optional[str] = None
+    model: str | None = None
     width: int = 768
     height: int = 512
     length: int = 97
     fps: int = 25
     audio: bool = True
-    upscale_model: Optional[str] = None   # video --upscale model; filler falls back to DEFAULT_VIDEO_UPSCALE_MODEL
+    upscale_model: str | None = None   # video --upscale model; filler falls back to DEFAULT_VIDEO_UPSCALE_MODEL
 
 
 @dataclass
 class Audio:
-    music_model: Optional[str] = None          # filler falls back to DEFAULT_MUSIC_MODEL
+    music_model: str | None = None          # filler falls back to DEFAULT_MUSIC_MODEL
     music_tags: str = ""                        # brand sonic identity, prepended to the brief
     music_bpm: int = 100
     music_keyscale: str = "C minor"
     music_duration: float = 8.0
     foley: str = "hunyuan"                       # backend selector: "hunyuan" | "ltx-native"
-    foley_model: Optional[str] = None            # filler falls back to DEFAULT_FOLEY_MODEL
+    foley_model: str | None = None            # filler falls back to DEFAULT_FOLEY_MODEL
     foley_negative: str = "music, speech, voice, singing, noisy, harsh"
     foley_cfg: float = 4.5
     foley_steps: int = 50
@@ -78,7 +77,7 @@ class Audio:
 
 @dataclass
 class Threed:
-    model: Optional[str] = None        # filler falls back to DEFAULT_3D_MODEL
+    model: str | None = None        # filler falls back to DEFAULT_3D_MODEL
     format: str = "glb"
     octree: int = 256                  # VAEDecodeHunyuan3D octree_resolution (geometry detail)
     steps: int = 30
@@ -101,7 +100,7 @@ class BrandManifest:
     video: Video = field(default_factory=Video)
     audio: Audio = field(default_factory=Audio)
     threed: Threed = field(default_factory=Threed)
-    root: Optional[Path] = None  # the brand folder, set by load_manifest
+    root: Path | None = None  # the brand folder, set by load_manifest
 
 
 def _sub(cls, data, key):
@@ -135,7 +134,7 @@ def load_manifest(path) -> BrandManifest:
     except yaml.YAMLError as e:
         # surface as ManifestError (a ValueError) so callers like lint/doctor degrade to a clean
         # message instead of crashing on a malformed brand.yaml
-        raise ManifestError(f"brand.yaml is not valid YAML: {e}")
+        raise ManifestError(f"brand.yaml is not valid YAML: {e}") from e
     if not isinstance(data, dict):
         raise ManifestError("brand.yaml must be a mapping at the top level")
     name = data.get("name")
