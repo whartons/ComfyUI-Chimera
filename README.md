@@ -39,9 +39,10 @@ ComfyUI, especially **Blackwell (RTX 50-series)**.
   video, audio, and 3D** through a shared core (prompt → validated graph → ComfyUI → routed output);
   **`--brand` is an opt-in layer** (see below). Every graph was built from live node schemas and run
   end-to-end on a 5090.
-- **🩺 Preflight + onboarding** — **`chimera doctor`** checks ComfyUI reachability, installed node
-  packs, and your models *before* a multi-minute render; **`new-brand`** scaffolds a brand and **`lint`**
-  validates `brand.yaml` + its assets so config mistakes surface early.
+- **🩺 Preflight, updates + onboarding** — **`chimera doctor`** checks ComfyUI reachability, installed
+  node packs, and your models *before* a multi-minute render; **`chimera update-check`** reports what's
+  outdated (the repo, ComfyUI, pip deps, the pinned node packs) without breaking the pin-and-audit
+  policy; **`new-brand`** + **`lint`** scaffold and validate a brand.
 - **🔁 Reproducible by construction** — every render writes a schema-versioned **sidecar** JSON with a
   **provenance** block (resolved model + seed + the *actual* graph prompts, plus the ComfyUI version,
   pipeline git commit, and a structural graph signature). `chimera replay <sidecar>.json` re-runs the
@@ -56,7 +57,7 @@ ComfyUI, especially **Blackwell (RTX 50-series)**.
   folder. Entirely opt-in — the tool generates fine without it. The *pattern* is public; your brand
   data stays gitignored. See [`modules/image/brand-kits.md`](modules/image/brand-kits.md).
 
-**279 GPU-free unit tests** (mocked ComfyUI client) keep the core green without a GPU — run on every
+**288 GPU-free unit tests** (mocked ComfyUI client) keep the core green without a GPU — run on every
 push via cross-platform CI (Linux + Windows).
 
 ## 🧩 Modules
@@ -89,7 +90,7 @@ The parts an engineer (or hiring manager) might want to see:
 - **Third-party code is treated as untrusted.** The MCP server and every custom node pack are
   **read, adversarially audited, and pinned to an exact version or commit** before adoption, with
   per-tool approval gates on the dangerous tools — never `@latest`.
-- **Tested without a GPU, on every push.** 279 tests run against a mocked ComfyUI client (graph-building,
+- **Tested without a GPU, on every push.** 288 tests run against a mocked ComfyUI client (graph-building,
   routing, sidecar, replay, scaffolder, doctor, and agent-loop logic), linted with **ruff** and packaged
   as an installable CLI — all verified by **CI on Linux + Windows**.
 
