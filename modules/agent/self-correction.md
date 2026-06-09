@@ -95,6 +95,49 @@ python scripts/agent/auto_generate.py --brand <brand> --subject "<subject>" \
 brand folder **and** where the judge graph drops (and the judge reads back) its verdict
 `.txt`.
 
+### The judge & correction in action (real local-backend output)
+
+The rubric is **strict** (overall PASS only if *every* criterion is MET) and asks the judge to attach
+a structured fix to each miss — `FIX: add <…>; avoid <…>`. The expander consumes that directly:
+`add` terms are emphasized in the next positive prompt; `avoid` terms are **stripped from the subject**
+in the positive (Z-Image zeroes the text negative, so the positive is the real lever) and also pushed
+to the negative for models that honor it (FLUX.2). See `scripts/agent/expander.py`.
+
+**The judge evaluates every criterion and emits an actionable fix.** Verbatim from Qwen2.5-VL-7B on an
+`example-brand` rover render:
+
+```
+1. MET — six wheels arranged in two rows of three, providing stability typical of military vehicles…
+2. MET — robustly built with sharp angles consistent with industrial designs…
+3. NOT-MET  FIX: add subtle highlights reflecting light off metallic surfaces;
+            avoid overly smooth textures that might suggest plastic models rather than real metal
+4. MET — dominant colors match those specified (#1c1f22, #2e3338)…
+5. MET — clear details, no blurring…
+```
+
+That `FIX: add … ; avoid …` is exactly what the expander turns into the next prompt.
+
+**It enforces the brand.** Given a deliberately off-brand *"glossy orange plastic toy rover,"* the
+strict judge rejects it (and explains why), where the old lenient pass-bar would have rubber-stamped it:
+
+```
+NOT-MET — a playful, childlike appearance that aligns more closely with "toy-like" than with
+          rugged tactical-industrial / precise engineering themes.
+NOT-MET — lacks the specified palette colors like #1c1f22 …
+Overall: FAIL   score: 0.7
+```
+
+…versus an on-brand render the same judge passes at **0.95–0.97**.
+
+**Honest note on convergence.** Z-Image's base quality plus the brand prompt injection are strong
+enough that a *satisfiable* subject usually passes on the **first** iteration — so a dramatic
+multi-iteration fail→pass is the exception, not the rule. The correction machinery is what engages
+when a render genuinely misses, and its reliability scales with the judge: the local 7B follows the
+structured-fix format *intermittently*, so a more capable judge (a larger local VLM, or the attended
+[assistant panel](#the-two-backends)) sharpens both the strict verdict and the fix directives. The
+value the strict-rubric + structured-FIX design adds is that the loop now *enforces* the brand instead
+of accepting a render that misses it.
+
 **How the verdict is captured:** the judge graph
 (`workflows/templates/agent-vlm-judge.json`) runs Qwen2.5-VL via the
 `AILab_QwenVL_Advanced` node and writes its text output to disk with the **core**
